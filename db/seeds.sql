@@ -8,7 +8,7 @@ VALUES ("Ownership"),
 
 
 INSERT INTO role (title, salary, department_id)
-VALUES ("CEO", 500000, 1)
+VALUES ("CEO", 500000, 1),
        ( "Manager", 90000, 2),
        ( "Assistant to the Manager", 70000, 3),
        ( "Salesman", 65000, 3),
