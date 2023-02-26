@@ -90,3 +90,26 @@ function viewEmp() {
     }
   );
 }
+
+function addDept() {
+  inquirer
+  .prompt([
+    {
+      type: "input",
+      message: "Department name:",
+      name: "name",
+    },
+  
+  ])
+  .then((input) => {
+      const name = [input.name];
+
+      db.query(`INSERT INTO department (name) VALUES (?)`, name, function (err, results) {
+          if (err){
+              throw err;
+          }console.table(results);
+          start();
+        });
+      });
+    
+ }
