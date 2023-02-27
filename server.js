@@ -29,6 +29,7 @@ function start() {
           "View Departments",
           "View Roles",
           "View Employees",
+          "View Employees by Manager",
           "Add Department",
           "Add Role",
           "Add Employee",
@@ -45,6 +46,8 @@ function start() {
         viewRoles();
       } else if (answer.choice === "View Employees") {
         viewEmp();
+      } else if (answer.choice === "View Employees by Manager") {
+        viewEmpByMgr();
       } else if (answer.choice === "Add Department") {
         addDept();
       } else if (answer.choice === "Add Role") {
@@ -93,13 +96,55 @@ function viewEmp() {
   );
 }
 
+function viewEmpByMgr() {
+  db.query(
+    "SELECT id, first_name, last_name, role_id, manager_id FROM employee",
+    function (err, data) {
+      if (err) {
+        throw err;
+      }
+      let managers = data.map((mgr) => {
+        return {
+          name: mgr.first_name + " " + mgr.last_name,
+          value: mgr.id,
+        };
+      });
+
+      inquirer
+        .prompt([
+          {
+            name: "mgr",
+            type: "list",
+            message: "Choose a manager:",
+            choices: managers,
+          },
+        ])
+        .then((input) => {
+          const mgr = [input.mgr];
+
+          db.query(
+            `SELECT id, first_name, last_name, role_id, manager_id FROM employee WHERE manager_id = ?`,
+            mgr,
+            function (err, data) {
+              if (err) {
+                throw err;
+              }
+              console.table(data);
+              start();
+            }
+          );
+        });
+    }
+  );
+}
+
 function addDept() {
   inquirer
     .prompt([
       {
+        name: "name",
         type: "input",
         message: "Department name:",
-        name: "name",
       },
     ])
     .then((input) => {
@@ -132,27 +177,25 @@ function addRole() {
       };
     });
 
-
     inquirer
       .prompt([
         {
+          name: "role",
           type: "input",
           message: "Role name:",
-          name: "role",
         },
         {
+          name: "salary",
           type: "input",
           message: "Role salary:",
-          name: "salary",
         },
         {
+          name: "dept",
           type: "list",
           message: "Department role falls under:",
-          name: "dept",
           choices: depts,
         },
       ])
-
 
       .then((input) => {
         const answers = [input.role, input.salary, input.dept];
@@ -169,5 +212,71 @@ function addRole() {
           }
         );
       });
+  });
+}
+
+function addEmp() {
+  db.query("SELECT * FROM role", function (err, data) {
+    if (err) {
+      throw err;
+    }
+    let roles = data.map((role) => {
+      return {
+        name: role.title,
+        value: role.id,
+      };
+    });
+
+    db.query("SELECT * FROM employee", function (err, data) {
+      if (err) {
+        throw err;
+      }
+      let managers = data.map((mgr) => {
+        return {
+          name: mgr.first_name + " " + mgr.last_name,
+          value: mgr.id,
+        };
+      });
+
+      inquirer
+        .prompt([
+          {
+            name: "first",
+            type: "input",
+            message: "Employee's first name:",
+          },
+          {
+            name: "last",
+            type: "input",
+            message: "Last name:",
+          },
+          {
+            name: "role",
+            type: "list",
+            message: "Role:",
+            choices: roles,
+          },
+          {
+            name: "mgr",
+            type: "list",
+            message: "Employee's manager:",
+            choices: managers,
+          },
+        ])
+        .then((input) => {
+          const paramsE = [input.first, input.last, input.role, input.mgr];
+
+          db.query(
+            `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`,
+            paramsE,
+            function (err, results) {
+              if (err) {
+                throw err;
+              }
+              start();
+            }
+          );
+        });
+    });
   });
 }
