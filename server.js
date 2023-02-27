@@ -10,7 +10,6 @@ const db = mysql.createConnection(
     password: "rootroot",
     database: "company_db",
   },
-  console.log(`Connected`)
 );
 db.connect(function (err) {
   if (err) {
@@ -33,7 +32,7 @@ function start() {
           "Add Department",
           "Add Role",
           "Add Employee",
-          "Update Employee",
+          "Change Employee Role",
           "Exit",
         ],
         name: "choice",
@@ -54,8 +53,8 @@ function start() {
         addRole();
       } else if (answer.choice === "Add Employee") {
         addEmp();
-      } else if (answer.choice === "Update Employee") {
-        updateEmp();
+      } else if (answer.choice === "Change Employee Role") {
+        changeRole();
       }
     });
 }
@@ -273,6 +272,61 @@ function addEmp() {
               if (err) {
                 throw err;
               }
+              start();
+            }
+          );
+        });
+    });
+  });
+}
+
+function changeRole() {
+  db.query("SELECT * FROM employee", function (err, data) {
+    if (err) {
+      throw err;
+    }
+    let employees = data.map((employee) => {
+      return {
+        name: employee.first_name + " " + employee.last_name,
+        value: employee.id,
+      };
+    });
+
+    db.query("SELECT * FROM role", function (err, data) {
+      if (err) {
+        throw err;
+      }
+      let roles = data.map((roles) => {
+        return {
+          name: roles.title,
+          value: roles.id,
+        };
+      });
+
+      inquirer
+        .prompt([
+          {
+            name: "employee",
+            type: "list",
+            message: "Employee to update:",
+            choices: employees,
+          },
+
+          {
+            name: "newRole",
+            type: "list",
+            message: "New role:",
+            choices: roles,
+          },
+        ])
+        .then((input) => {
+          db.query(
+            `UPDATE employee SET role_id = ${input.newRole} WHERE employee.id = ${input.employee}`,
+            function (err, results) {
+              if (err) {
+                throw err;
+              }
+              console.table(results);
               start();
             }
           );
