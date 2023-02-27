@@ -67,16 +67,18 @@ function viewDept() {
   });
 }
 
-function  viewRoles() {
-
-  db.query('SELECT id, title, salary, department_id FROM role', function (err, results) {
-      if (err){
-          throw err;
-      }console.table(results);
+function viewRoles() {
+  db.query(
+    "SELECT id, title, salary, department_id FROM role",
+    function (err, results) {
+      if (err) {
+        throw err;
+      }
+      console.table(results);
       start();
-    });
-    
- }
+    }
+  );
+}
 
 function viewEmp() {
   db.query(
@@ -93,23 +95,79 @@ function viewEmp() {
 
 function addDept() {
   inquirer
-  .prompt([
-    {
-      type: "input",
-      message: "Department name:",
-      name: "name",
-    },
-  
-  ])
-  .then((input) => {
+    .prompt([
+      {
+        type: "input",
+        message: "Department name:",
+        name: "name",
+      },
+    ])
+    .then((input) => {
       const name = [input.name];
 
-      db.query(`INSERT INTO department (name) VALUES (?)`, name, function (err, results) {
-          if (err){
-              throw err;
-          }console.table(results);
+      db.query(
+        `INSERT INTO department (name) VALUES (?)`,
+        name,
+        function (err, results) {
+          if (err) {
+            throw err;
+          }
+          console.table(results);
           start();
-        });
+        }
+      );
+    });
+}
+
+function addRole() {
+  db.query("SELECT * FROM department", function (err, data) {
+    if (err) {
+      throw err;
+    }
+
+    let depts = data.map((allDepts) => {
+      return {
+        name: allDepts.name,
+        value: allDepts.id,
+      };
+    });
+
+
+    inquirer
+      .prompt([
+        {
+          type: "input",
+          message: "Role name:",
+          name: "role",
+        },
+        {
+          type: "input",
+          message: "Role salary:",
+          name: "salary",
+        },
+        {
+          type: "list",
+          message: "Department role falls under:",
+          name: "dept",
+          choices: depts,
+        },
+      ])
+
+
+      .then((input) => {
+        const answers = [input.role, input.salary, input.dept];
+
+        db.query(
+          `INSERT INTO role (title, salary, department_id) VALUES (?,?,?)`,
+          answers,
+          function (err, data) {
+            if (err) {
+              throw err;
+            }
+            console.table(data);
+            start();
+          }
+        );
       });
-    
- }
+  });
+}
