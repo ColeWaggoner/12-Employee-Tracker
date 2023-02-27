@@ -27,6 +27,7 @@ function start() {
           "View Roles",
           "View Employees",
           "View Employees by Manager",
+          "View Employees by Department",
           "Add Department",
           "Add Role",
           "Add Employee",
@@ -46,6 +47,8 @@ function start() {
         viewEmp();
       } else if (answer.choice === "View Employees by Manager") {
         viewEmpByMgr();
+      } else if (answer.choice === "View Employees by Department") {
+        viewEmpByDept();
       } else if (answer.choice === "Add Department") {
         addDept();
       } else if (answer.choice === "Add Role") {
@@ -56,7 +59,7 @@ function start() {
         changeMan();
       } else if (answer.choice === "Change Employee Role") {
         changeRole();
-      }else if (answer.choice === "Exit") {
+      } else if (answer.choice === "Exit") {
         db.end();
       }
     });
@@ -93,7 +96,6 @@ function viewEmp() {
         throw err;
       }
       console.table(data);
-      start();
     }
   );
 }
@@ -111,7 +113,7 @@ function viewEmpByMgr() {
           value: mgr.id,
         };
       });
-
+      console.log(managers);
       inquirer
         .prompt([
           {
@@ -138,6 +140,54 @@ function viewEmpByMgr() {
         });
     }
   );
+}
+
+function viewEmpByDept() {
+  db.query("SELECT * FROM department", function (err, data) {
+    if (err) {
+      throw err;
+    }
+    let depts = data.map((dept) => {
+      return {
+        name: dept.name,
+        value: dept.id,
+      };
+    });
+    inquirer
+
+      .prompt([
+        {
+          name: "dept",
+          type: "list",
+          message: "Choose a department:",
+          choices: depts,
+        },
+      ])
+      .then((input) => {
+        const dept = [input.dept];
+
+        db.query(
+          `
+          SELECT e.id, e.first_name, e.last_name, r.title, d.name AS department
+          FROM employee AS e
+          JOIN role AS r ON e.role_id = r.id
+          JOIN department AS d ON r.department_id = d.id
+          WHERE d.id = ?
+        `,
+          dept,
+          function (err, data) {
+            if (err) {
+              throw err;
+            }
+            else {
+              console.table(data);
+              start();
+            }
+            
+          }
+        );
+      });
+  });
 }
 
 function addDept() {
@@ -337,7 +387,6 @@ function changeMan() {
     });
   });
 }
-
 
 function changeRole() {
   db.query("SELECT * FROM employee", function (err, data) {
