@@ -3,14 +3,12 @@ const fs = require("fs");
 const mysql = require("mysql2");
 const table = require("console.table");
 
-const db = mysql.createConnection(
-  {
-    host: "localhost",
-    user: "root",
-    password: "rootroot",
-    database: "company_db",
-  },
-);
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "rootroot",
+  database: "company_db",
+});
 db.connect(function (err) {
   if (err) {
     throw err;
@@ -32,6 +30,7 @@ function start() {
           "Add Department",
           "Add Role",
           "Add Employee",
+          "Change Employee Manager",
           "Change Employee Role",
           "Exit",
         ],
@@ -53,8 +52,12 @@ function start() {
         addRole();
       } else if (answer.choice === "Add Employee") {
         addEmp();
+      } else if (answer.choice === "Change Employee Manager") {
+        changeMan();
       } else if (answer.choice === "Change Employee Role") {
         changeRole();
+      }else if (answer.choice === "Exit") {
+        db.end();
       }
     });
 }
@@ -279,6 +282,62 @@ function addEmp() {
     });
   });
 }
+
+function changeMan() {
+  db.query("SELECT * FROM employee", function (err, data) {
+    if (err) {
+      throw err;
+    }
+    let employees = data.map((employee) => {
+      return {
+        name: employee.first_name + " " + employee.last_name,
+        value: employee.id,
+      };
+    });
+
+    db.query("SELECT * FROM employee", function (err, data) {
+      if (err) {
+        throw err;
+      }
+      let managers = data.map((managers) => {
+        return {
+          name: managers.first_name + " " + managers.last_name,
+          value: managers.id,
+        };
+      });
+
+      inquirer
+        .prompt([
+          {
+            name: "employee",
+            type: "list",
+            message: "Employee to update:",
+            choices: employees,
+          },
+
+          {
+            name: "newMgr",
+            type: "list",
+            message: "New Manager:",
+            choices: managers,
+          },
+        ])
+        .then((input) => {
+          db.query(
+            `UPDATE employee SET manager_id = ${input.newMgr} WHERE employee.id = ${input.employee}`,
+            function (err, results) {
+              if (err) {
+                throw err;
+              }
+              console.table(results);
+              start();
+            }
+          );
+        });
+    });
+  });
+}
+
 
 function changeRole() {
   db.query("SELECT * FROM employee", function (err, data) {
