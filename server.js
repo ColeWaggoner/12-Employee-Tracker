@@ -96,6 +96,7 @@ function viewEmp() {
         throw err;
       }
       console.table(data);
+      start();
     }
   );
 }
